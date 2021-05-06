@@ -24,7 +24,7 @@ begin
   THorse.Get('/banco'    , List);
   THorse.Get('/banco/:id', Find);
   THorse.Post('/banco'   , Insert);
-  THorse.Put('/banco'    , Update);
+  THorse.Put('/banco/:id'    , Update);
   THorse.Delete('/banco/:id' , Delete);
   THorse.Get('/arquivo'    , Arquivo);
   THorse.Get('/arquivo2'    , Arquivo2);
@@ -73,14 +73,31 @@ begin
 
     Res.Send<TJSONObject>(vDAO.Insert(LJSONRec));
   finally
+    LJSONRec.Free;
     vDAO.Free;
   end;
 end;
 
 
 procedure Update(Req: THorseRequest; Res: THorseResponse; Next: TProc);
+var
+  vDAO: TDAOBanco;
+  LJSONRec : TJSONValue;
+  LId: int64;
 begin
+  if Req.Body.IsEmpty then
+    raise Exception.Create('Requisição vazia.');
 
+  try
+    vDAO:= TDAOBanco.Create;
+
+    LJSONRec:= TJSONObject.ParseJSONValue(TEncoding.ASCII.GetBytes(Req.Body), 0) as TJSONValue;
+    LId:= Req.Params['id'].ToInt64;
+    Res.Send<TJSONObject>(vDAO.Update(LJSONRec, LId));
+  finally
+    LJSONRec.Free;
+    vDAO.Free;
+  end;
 end;
 
 procedure Delete(Req: THorseRequest; Res: THorseResponse; Next: TProc);

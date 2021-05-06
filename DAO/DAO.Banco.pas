@@ -11,11 +11,11 @@ type
   public
     constructor Create;
     destructor Destroy; override;
-    function List(const AQuery: TDictionary<string, string>): TJSONArray;
-    function Find(const ACodigo: integer)                   : TJSONObject;
-    function Insert(const AValues: TJSONValue)              : TJSONObject;
-    function Update(const AValue: TJSONValue)               : TJSONObject;
-    function Delete(const ACodigo: integer)                 : TJSONObject;
+    function List(const AQuery: TDictionary<string, string>)           : TJSONArray;
+    function Find(const ACodigo: integer)                              : TJSONObject;
+    function Insert(const AValues: TJSONValue)                         : TJSONObject;
+    function Update(const AValues: TJSONValue; const ACodigo: integer) : TJSONObject;
+    function Delete(const ACodigo: integer)                            : TJSONObject;
   end;
 
 implementation
@@ -95,6 +95,31 @@ begin
   end;
 end;
 
+function TDAOBanco.Update(const AValues: TJSONValue; const ACodigo: integer) : TJSONObject;
+var
+  LCodigo : integer;
+  LNome   : string;
+begin
+  try
+    Qry.Close;
+    Qry.SQL.Add('UPDATE BANCO SET CODIGO = :CODIGO, NOME = :NOME WHERE CODIGO = :ID');
+
+    LCodigo:= AValues.GetValue<integer>('CODIGO');
+    LNome  := AValues.GetValue<string>('NOME');
+
+    Qry.ParamByName('CODIGO').AsInteger:= LCodigo;
+    Qry.ParamByName('NOME').AsString:= LNome;
+    Qry.ParamByName('ID').AsInteger := ACodigo;
+    Qry.Execute;
+  finally
+    Result:=
+      TJSONObject.Create(
+        TJSONPair.Create('CODIGO', TJSONNumber.Create(LCodigo))
+      );
+    FreeAndNil(Qry);
+  end;
+end;
+
 function TDAOBanco.Insert(const AValues: TJSONValue): TJSONObject;
 var
   LCodigo : integer;
@@ -117,10 +142,6 @@ begin
       );
     FreeAndNil(Qry);
   end;
-end;
-
-function TDAOBanco.Update(const AValue: TJSONValue): TJSONObject;
-begin
 
 end;
 
